@@ -7,8 +7,8 @@
     <ProjectGuid>{A1629F8A-54F8-42B4-AF91-66A0F958F1D2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Our.Umbraco.FileSystemProviders.Azure.Tests</RootNamespace>
-    <AssemblyName>Our.Umbraco.FileSystemProviders.Azure.Tests</AssemblyName>
+    <RootNamespace>Our.Umbraco.FileSystemProviders.ObjectStorage.Tests</RootNamespace>
+    <AssemblyName>Our.Umbraco.FileSystemProviders.ObjectStorage.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -24,7 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Our.Umbraco.FileSystemProviders.Azure.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Our.Umbraco.FileSystemProviders.ObjectStorage.Tests.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -266,13 +266,13 @@
     <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\UmbracoFileSystemProviders.Azure.Installer\UmbracoFileSystemProviders.Azure.Installer.csproj">
+    <ProjectReference Include="..\UmbracoFileSystemProviders.ObjectStorage.Installer\UmbracoFileSystemProviders.ObjectStorage.Installer.csproj">
       <Project>{f67f3c8f-7b04-4d4f-a1fc-ad588e93afb4}</Project>
-      <Name>UmbracoFileSystemProviders.Azure.Installer</Name>
+      <Name>UmbracoFileSystemProviders.ObjectStorage.Installer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\UmbracoFileSystemProviders.Azure\UmbracoFileSystemProviders.Azure.csproj">
+    <ProjectReference Include="..\UmbracoFileSystemProviders.ObjectStorage\UmbracoFileSystemProviders.ObjectStorage.csproj">
       <Project>{749bc432-144a-4250-9066-d1fe170afe42}</Project>
-      <Name>UmbracoFileSystemProviders.Azure</Name>
+      <Name>UmbracoFileSystemProviders.ObjectStorage</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

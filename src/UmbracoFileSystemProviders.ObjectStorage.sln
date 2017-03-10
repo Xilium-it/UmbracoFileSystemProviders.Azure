@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.Azure", "UmbracoFileSystemProviders.Azure\UmbracoFileSystemProviders.Azure.csproj", "{749BC432-144A-4250-9066-D1FE170AFE42}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.ObjectStorage", "UmbracoFileSystemProviders.ObjectStorage\UmbracoFileSystemProviders.ObjectStorage.csproj", "{749BC432-144A-4250-9066-D1FE170AFE42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.Azure.Tests", "UmbracoFileSystemProviders.Azure.Tests\UmbracoFileSystemProviders.Azure.Tests.csproj", "{A1629F8A-54F8-42B4-AF91-66A0F958F1D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.ObjectStorage.Tests", "UmbracoFileSystemProviders.ObjectStorage.Tests\UmbracoFileSystemProviders.ObjectStorage.Tests.csproj", "{A1629F8A-54F8-42B4-AF91-66A0F958F1D2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AACE9F95-E2A5-4B66-B4D3-6CF0F53296DC}"
 	ProjectSection(SolutionItems) = preProject
@@ -24,12 +24,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildPackage", "BuildPackag
 		..\build\package.proj = ..\build\package.proj
 		..\build\package.xml = ..\build\package.xml
 		..\build\transforms\security.config.install.xdt = ..\build\transforms\security.config.install.xdt
-		..\build\UmbracoFileSystemProviders.Azure.proj = ..\build\UmbracoFileSystemProviders.Azure.proj
+		..\build\UmbracoFileSystemProviders.ObjectStorage.proj = ..\build\UmbracoFileSystemProviders.ObjectStorage.proj
 		..\build\transforms\web.config.install.xdt = ..\build\transforms\web.config.install.xdt
 		..\build\transforms\web.config.uninstall.xdt = ..\build\transforms\web.config.uninstall.xdt
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.Azure.Installer", "UmbracoFileSystemProviders.Azure.Installer\UmbracoFileSystemProviders.Azure.Installer.csproj", "{F67F3C8F-7B04-4D4F-A1FC-AD588E93AFB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoFileSystemProviders.ObjectStorage.Installer", "UmbracoFileSystemProviders.ObjectStorage.Installer\UmbracoFileSystemProviders.ObjectStorage.Installer.csproj", "{F67F3C8F-7B04-4D4F-A1FC-AD588E93AFB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
