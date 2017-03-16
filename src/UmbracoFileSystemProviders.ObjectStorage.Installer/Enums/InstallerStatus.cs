@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure.Installer.Enums
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer.Enums
 {
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;

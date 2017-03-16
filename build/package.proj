@@ -3,7 +3,7 @@
 
 	<!-- TARGETS -->
 	<Target Name="BuildPackages">
-		<MSBuild Projects="$(MSBuildProjectDirectory)\UmbracoFileSystemProviders.Azure.proj" />
+		<MSBuild Projects="$(MSBuildProjectDirectory)\UmbracoFileSystemProviders.ObjectStorage.proj" />
 	</Target>
 
 </Project>

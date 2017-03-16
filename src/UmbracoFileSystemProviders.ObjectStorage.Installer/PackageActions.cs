@@ -2,7 +2,7 @@
 // Copyright (c) James Jackson-South, Jeavon Leopold, and contributors. All rights reserved.
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
-namespace Our.Umbraco.FileSystemProviders.Azure.Installer
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
 {
     using System;
     using System.Web;
@@ -26,7 +26,7 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             /// <inheritdoc/>
             public string Alias()
             {
-                return "UmbracoFileSystemProviders.Azure.TransformConfig";
+                return "UmbracoFileSystemProviders.ObjectStorage.TransformConfig";
             }
 
             /// <inheritdoc/>
@@ -39,8 +39,8 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             public XmlNode SampleXml()
             {
                 string xml = "<Action runat=\"install\" "
-                          + "undo=\"true\" alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
-                          + "file=\"~/web.config\" xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/web.config\">"
+                          + "undo=\"true\" alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
+                          + "file=\"~/web.config\" xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/web.config\">"
                           + "</Action>";
                 return helper.parseStringToXmlNode(xml);
             }

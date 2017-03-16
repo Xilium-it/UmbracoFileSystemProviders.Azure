@@ -10,12 +10,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("UmbracoFileSystemProviders.Azure.Installer")]
-[assembly: AssemblyDescription("An Umbraco File System Provider for storing items in the media section on Azure Blob Storage")]
+[assembly: AssemblyTitle("UmbracoFileSystemProviders.ObjectStorage.Installer")]
+[assembly: AssemblyDescription("An Umbraco File System Provider for storing items in the media section on OpenStack ObjectStorage")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("James Jackson-South")]
-[assembly: AssemblyProduct("UmbracoFileSystemProviders.Azure")]
-[assembly: AssemblyCopyright("Copyright © James Jackson-South and contributors.")]
+[assembly: AssemblyCompany("Xilium di Flavio Spezi")]
+[assembly: AssemblyProduct("UmbracoFileSystemProviders.ObjectStorage")]
+[assembly: AssemblyCopyright("Copyright © Xilium di Flavio Spezi and contributors.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -25,6 +25,6 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("f67f3c8f-7b04-4d4f-a1fc-ad588e93afb4")]
+[assembly: Guid("6B81728C-9674-47D9-8E86-A6767182568B")]
 
-[assembly: InternalsVisibleTo("Our.Umbraco.FileSystemProviders.Azure.Tests")]
+[assembly: InternalsVisibleTo("Our.Umbraco.FileSystemProviders.ObjectStorage.Tests")]

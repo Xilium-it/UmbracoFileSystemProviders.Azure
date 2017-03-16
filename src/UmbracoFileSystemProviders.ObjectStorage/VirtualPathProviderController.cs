@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
     using System;
     using System.Configuration;
@@ -34,20 +34,20 @@ namespace Our.Umbraco.FileSystemProviders.Azure
                                                   .Equals("true", StringComparison.InvariantCultureIgnoreCase);
 
             IFileSystem fileSystem = FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider(Constants.DefaultMediaRoute);
-            bool isAzureBlobFileSystem = fileSystem is AzureBlobFileSystem;
+            bool isObjectStorageFileSystem = fileSystem is ObjectStorageFileSystem;
 
-            if (!disable && isAzureBlobFileSystem)
+            if (!disable && isObjectStorageFileSystem)
             {
-                AzureFileSystem azureFileSystem = ((AzureBlobFileSystem)fileSystem).FileSystem;
+                var objectStorageFileSystem = ((ObjectStorageFileSystem)fileSystem).FileSystem;
 
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if (azureFileSystem.UseDefaultRoute)
+                if (objectStorageFileSystem.UseDefaultRoute)
                 {
                     FileSystemVirtualPathProvider.ConfigureMedia(Constants.DefaultMediaRoute);
                 }
                 else
                 {
-                    FileSystemVirtualPathProvider.ConfigureMedia(azureFileSystem.ContainerName);
+                    FileSystemVirtualPathProvider.ConfigureMedia(objectStorageFileSystem.ContainerName);
                 }
             }
 

@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
     using System;
     using System.IO;
@@ -65,8 +65,8 @@ namespace Our.Umbraco.FileSystemProviders.Azure
                 cache.SetCacheability(HttpCacheability.Public);
                 cache.VaryByHeaders["Accept-Encoding"] = true;
 
-                IFileSystem azureBlobFileSystem = FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider("media");
-                int maxDays = ((AzureBlobFileSystem)azureBlobFileSystem).FileSystem.MaxDays;
+                IFileSystem objectStorageFileSystem = FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider("media");
+                int maxDays = ((ObjectStorageFileSystem)objectStorageFileSystem).FileSystem.MaxDays;
 
                 cache.SetExpires(DateTime.Now.ToUniversalTime().AddDays(maxDays));
                 cache.SetMaxAge(new TimeSpan(maxDays, 0, 0, 0));

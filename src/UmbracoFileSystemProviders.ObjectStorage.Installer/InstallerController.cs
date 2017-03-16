@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure.Installer
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
 {
     using System;
     using System.Collections.Generic;
@@ -20,8 +20,6 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
     using global::Umbraco.Core.Logging;
     using global::Umbraco.Web.Mvc;
     using global::Umbraco.Web.WebApi;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
 
     using Models;
     using umbraco.cms.businesslogic.packager.standardPackageActions;
@@ -74,18 +72,22 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             IList<Parameter> newParameters = parameters as IList<Parameter> ?? parameters.ToList();
 
             // TODO: Handle possible NullReferenceExecption.
-            string connection = newParameters.SingleOrDefault(k => k.Key == "connectionString").Value;
-            string containerName = newParameters.SingleOrDefault(k => k.Key == "containerName").Value;
+            var urlBase = newParameters.SingleOrDefault(k => k.Key == "urlBase").Value;
+            var projectId = newParameters.SingleOrDefault(k => k.Key == "projectId").Value;
+            var containerName = newParameters.SingleOrDefault(k => k.Key == "containerName").Value;
+            var region = newParameters.SingleOrDefault(k => k.Key == "region").Value;
+            var username = newParameters.SingleOrDefault(k => k.Key == "username").Value;
+            var password = newParameters.SingleOrDefault(k => k.Key == "password").Value;
+
             bool useDefaultRoute = bool.Parse(newParameters.SingleOrDefault(k => k.Key == "useDefaultRoute").Value);
             bool usePrivateContainer = bool.Parse(newParameters.SingleOrDefault(k => k.Key == "usePrivateContainer").Value);
-            string rootUrl = newParameters.SingleOrDefault(k => k.Key == "rootUrl").Value;
 
-            if (!TestAzureCredentials(connection, containerName))
+            if (!TestObjectStorageCredentials(urlBase, projectId, containerName, region, username, password))
             {
                 return InstallerStatus.ConnectionError;
             }
 
-            string routePrefix = useDefaultRoute ? Azure.Constants.DefaultMediaRoute : containerName;
+            string routePrefix = useDefaultRoute ? ObjectStorage.Constants.DefaultMediaRoute : containerName;
 
             if (SaveParametersToFileSystemProvidersXdt(this.fileSystemProvidersConfigInstallXdtPath, newParameters) && SaveContainerNameToWebConfigXdt(this.webConfigXdtPath, routePrefix))
             {
@@ -101,7 +103,9 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
                 else
                 {
                     // Merge in storage url to ImageProcessor security.config xdt
-                    SaveBlobPathToImageProcessorSecurityXdt(ImageProcessorSecurityInstallXdtPath, rootUrl, routePrefix, containerName);
+                    var objectStorageFileSystem = new ObjectStorageFileSystem(urlBase, projectId, containerName, region, username, password);
+
+                    SaveBlobPathToImageProcessorSecurityXdt(ImageProcessorSecurityInstallXdtPath, objectStorageFileSystem.GetFullPath(string.Empty), routePrefix, containerName);
 
                     // Transform ImageProcessor security.config
                     if (ExecuteImageProcessorSecurityConfigTransform())
@@ -364,13 +368,13 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             XmlNode transFormConfigAction =
                 helper.parseStringToXmlNode("<Action runat=\"install\" "
                                             + "undo=\"true\" "
-                                            + "alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
+                                            + "alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
                                             + "file=\"~/Config/FileSystemProviders.config\" "
-                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/FileSystemProviders.config\">"
+                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/FileSystemProviders.config\">"
                                             + "</Action>").FirstChild;
 
             PackageActions.TransformConfig transformConfig = new PackageActions.TransformConfig();
-            return transformConfig.Execute("UmbracoFileSystemProviders.Azure", transFormConfigAction);
+            return transformConfig.Execute("UmbracoFileSystemProviders.ObjectStorage", transFormConfigAction);
         }
 
         private static bool ExecuteWebConfigTransform()
@@ -378,13 +382,13 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             XmlNode transFormConfigAction =
                 helper.parseStringToXmlNode("<Action runat=\"install\" "
                                             + "undo=\"true\" "
-                                            + "alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
+                                            + "alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
                                             + "file=\"~/web.config\" "
-                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/web.config\">"
+                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/web.config\">"
                                             + "</Action>").FirstChild;
 
             PackageActions.TransformConfig transformConfig = new PackageActions.TransformConfig();
-            return transformConfig.Execute("UmbracoFileSystemProviders.Azure", transFormConfigAction);
+            return transformConfig.Execute("UmbracoFileSystemProviders.ObjectStorage", transFormConfigAction);
         }
 
         private static bool ExecuteMediaWebConfigTransform()
@@ -394,13 +398,13 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
                 XmlNode transFormConfigAction =
     helper.parseStringToXmlNode("<Action runat=\"install\" "
                                 + "undo=\"true\" "
-                                + "alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
+                                + "alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
                                 + "file=\"~/Media/web.config\" "
-                                + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/media-web.config\">"
+                                + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/media-web.config\">"
                                 + "</Action>").FirstChild;
 
                 PackageActions.TransformConfig transformConfig = new PackageActions.TransformConfig();
-                return transformConfig.Execute("UmbracoFileSystemProviders.Azure", transFormConfigAction);
+                return transformConfig.Execute("UmbracoFileSystemProviders.ObjectStorage", transFormConfigAction);
             }
 
             return true;
@@ -422,13 +426,13 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             XmlNode transFormConfigAction =
                 helper.parseStringToXmlNode("<Action runat=\"install\" "
                                             + "undo=\"false\" "
-                                            + "alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
+                                            + "alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
                                             + "file=\"~/config/imageprocessor/security.config\" "
-                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/security.config\">"
+                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/security.config\">"
                                             + "</Action>").FirstChild;
 
             PackageActions.TransformConfig transformConfig = new PackageActions.TransformConfig();
-            return transformConfig.Execute("UmbracoFileSystemProviders.Azure", transFormConfigAction);
+            return transformConfig.Execute("UmbracoFileSystemProviders.ObjectStorage", transFormConfigAction);
         }
 
         private static bool ExecuteImageProcessorWebConfigTransform()
@@ -436,34 +440,31 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
             XmlNode transFormConfigAction =
                 helper.parseStringToXmlNode("<Action runat=\"install\" "
                                             + "undo=\"false\" "
-                                            + "alias=\"UmbracoFileSystemProviders.Azure.TransformConfig\" "
+                                            + "alias=\"UmbracoFileSystemProviders.ObjectStorage.TransformConfig\" "
                                             + "file=\"~/web.config\" "
-                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/Azure/install/imageprocessor.web.config\">"
+                                            + "xdtfile=\"~/app_plugins/UmbracoFileSystemProviders/ObjectStorage/install/imageprocessor.web.config\">"
                                             + "</Action>").FirstChild;
 
             PackageActions.TransformConfig transformConfig = new PackageActions.TransformConfig();
-            return transformConfig.Execute("UmbracoFileSystemProviders.Azure", transFormConfigAction);
+            return transformConfig.Execute("UmbracoFileSystemProviders.ObjectStorage", transFormConfigAction);
         }
 
-        private static bool TestAzureCredentials(string connectionString, string containerName)
+        private static bool TestObjectStorageCredentials(string urlBase, string projectId, string containerName, string region, string username, string password)
         {
-            bool useEmulator = ConfigurationManager.AppSettings[Azure.Constants.Configuration.UseStorageEmulatorKey] != null
-                               && ConfigurationManager.AppSettings[Azure.Constants.Configuration.UseStorageEmulatorKey]
+            bool useEmulator = ConfigurationManager.AppSettings[ObjectStorage.Constants.Configuration.UseStorageEmulatorKey] != null
+                               && ConfigurationManager.AppSettings[ObjectStorage.Constants.Configuration.UseStorageEmulatorKey]
                                                       .Equals("true", StringComparison.InvariantCultureIgnoreCase);
             try
             {
-                CloudStorageAccount cloudStorageAccount = useEmulator ? CloudStorageAccount.DevelopmentStorageAccount : CloudStorageAccount.Parse(connectionString);
-
-                CloudBlobClient cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
-                CloudBlobContainer blobContainer = cloudBlobClient.GetContainerReference(containerName);
+                var objectStorageFileSystem = new ObjectStorageFileSystem(urlBase, projectId, containerName, region, username, password);
 
                 // This should fully check that the connection works.
-                blobContainer.CreateIfNotExists();
+                // blobContainer.CreateIfNotExists();
                 return true;
             }
             catch (Exception e)
             {
-                LogHelper.Error<InstallerController>($"Error validating Azure storage connection: {e.Message}", e);
+                LogHelper.Error<InstallerController>($"Error validating ObjectStorage connection: {e.Message}", e);
                 return false;
             }
         }

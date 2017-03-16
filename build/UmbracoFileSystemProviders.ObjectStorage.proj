@@ -16,24 +16,24 @@
 
   <!-- SHARED PROPERTIES -->
   <PropertyGroup>
-    <PackageName>UmbracoFileSystemProviders.Azure</PackageName>
+    <PackageName>UmbracoFileSystemProviders.ObjectStorage</PackageName>
     <MinUmbracoVersion>7.1.9</MinUmbracoVersion>
-    <Readme>An Azure Blob Storage IFileSystem provider for Umbraco.</Readme>
+    <Readme>An OpenStack ObjectStorage IFileSystem provider for Umbraco.</Readme>
     <AuthorName>James Jackson-South, Dirk Seefeld, Lars-Erik Aabech, Jeavon Leopold</AuthorName>
-    <AuthorUrl>https://github.com/JimBobSquarePants/UmbracoFileSystemProviders.Azure/graphs/contributors</AuthorUrl>
+    <AuthorUrl>https://github.com/JimBobSquarePants/UmbracoFileSystemProviders.ObjectStorage/graphs/contributors</AuthorUrl>
     <PackageLicenseName>Apache 2.0 license</PackageLicenseName>
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
-    <ProjectUrl>https://github.com/JimBobSquarePants/UmbracoFileSystemProviders.Azure</ProjectUrl>
+    <ProjectUrl>https://github.com/JimBobSquarePants/UmbracoFileSystemProviders.ObjectStorage</ProjectUrl>
   </PropertyGroup>
 
   <!-- NUGET ONLY PROPERTIES -->
   <PropertyGroup>
-    <PackageId>UmbracoFileSystemProviders.Azure</PackageId>
+    <PackageId>UmbracoFileSystemProviders.ObjectStorage</PackageId>
     <Copyright>Copyright &#169; James Jackson-South and contributors.</Copyright>
     <Owners>James Jackson-South</Owners>
-    <Description>An Azure Blob Storage IFileSystem provider for Umbraco. Used to offload static files in the media section to the cloud.</Description>
-    <IconUrl>https://raw.githubusercontent.com/JimBobSquarePants/UmbracoFileSystemProviders.Azure/develop/build/assets/logo/azure-logo-128.png</IconUrl>
-    <Tags>umbraco azure media blob imageprocessor</Tags>
+    <Description>An OpenStack ObjectStorage IFileSystem provider for Umbraco. Used to offload static files in the media section to the cloud.</Description>
+    <IconUrl>https://raw.githubusercontent.com/JimBobSquarePants/UmbracoFileSystemProviders.ObjectStorage/develop/build/assets/logo/openstack-logo-128.png</IconUrl>
+    <Tags>umbraco openstack objectstorage swift media blob imageprocessor</Tags>
     <Language>en-GB</Language>
     <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
   </PropertyGroup>
@@ -76,9 +76,9 @@
     <BuildUmbDir>$(BuildDir)\_umbraco</BuildUmbDir>
     <BuildNuGetDir>$(BuildDir)\_nuget</BuildNuGetDir>
     <ArtifactsDir>$(RootDir)\artifacts</ArtifactsDir>
-    <ProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.Azure</ProjectDir>
-    <InstallerProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.Azure.Installer</InstallerProjectDir>
-    <TestsProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.Azure.Tests</TestsProjectDir>
+    <ProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.ObjectStorage</ProjectDir>
+    <InstallerProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.ObjectStorage.Installer</InstallerProjectDir>
+    <TestsProjectDir>$(RootDir)\src\UmbracoFileSystemProviders.ObjectStorage.Tests</TestsProjectDir>
   </PropertyGroup>
 
   <!-- TARGETS -->
@@ -112,17 +112,17 @@
 
   <!-- COMPILE -->
   <Target Name="Compile" DependsOnTargets="UpdateAssemblyInfo">
-    <MSBuild Projects="$(ProjectDir)\UmbracoFileSystemProviders.Azure.csproj" Properties="Configuration=$(BuildConfig)" />
-    <MSBuild Projects="$(TestsProjectDir)\UmbracoFileSystemProviders.Azure.Tests.csproj" Properties="Configuration=$(BuildConfig)" />
-    <MSBuild Projects="$(InstallerProjectDir)\UmbracoFileSystemProviders.Azure.Installer.csproj" Properties="Configuration=$(BuildConfig)" />
+    <MSBuild Projects="$(ProjectDir)\UmbracoFileSystemProviders.ObjectStorage.csproj" Properties="Configuration=$(BuildConfig)" />
+    <!--<MSBuild Projects="$(TestsProjectDir)\UmbracoFileSystemProviders.ObjectStorage.Tests.csproj" Properties="Configuration=$(BuildConfig)" />-->
+    <MSBuild Projects="$(InstallerProjectDir)\UmbracoFileSystemProviders.ObjectStorage.Installer.csproj" Properties="Configuration=$(BuildConfig)" />
   </Target>
 
   <!-- PREPARE FILES -->
   <Target Name="PrepareFiles" DependsOnTargets="Compile">
     <ItemGroup>
       <!-- Shared -->
-      <BinFiles Include="$(ProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.Azure.dll" />
-      <PdbFiles Include="$(ProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.Azure.pdb" />
+      <BinFiles Include="$(ProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.ObjectStorage.dll" />
+      <PdbFiles Include="$(ProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.ObjectStorage.pdb" />
       <WebConfigXDTFiles Include="$(MSBuildProjectDirectory)\transforms\web.config.*.xdt" />
       <FileSystemProvidersConfigXDTInstallFile Include="$(MSBuildProjectDirectory)\transforms\FileSystemProviders.config.install.xdt" />
 
@@ -134,10 +134,10 @@
 
         <!-- Umbraco specific -->
       <!-- Newtonsoft.Json Excluded for now as Umbraco requires different major versions -->
-      <UmbracoOtherBinFiles Include="$(InstallerProjectDir)\bin\$(BuildConfig)\Microsoft.Web.XmlTransform.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.Edm.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.OData.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.Services.Client.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.WindowsAzure.Configuration.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.WindowsAzure.Storage.dll;$(ProjectDir)\bin\$(BuildConfig)\System.Spatial.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Azure.KeyVault.Core.dll" />
-      <InstallerBinFiles Include="$(InstallerProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.Azure.Installer.dll" />
+      <UmbracoOtherBinFiles Include="$(InstallerProjectDir)\bin\$(BuildConfig)\Microsoft.Web.XmlTransform.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.Edm.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.OData.dll;$(ProjectDir)\bin\$(BuildConfig)\Microsoft.Data.Services.Client.dll;$(ProjectDir)\bin\$(BuildConfig)\System.Spatial.dll" />
+      <InstallerBinFiles Include="$(InstallerProjectDir)\bin\$(BuildConfig)\Our.Umbraco.FileSystemProviders.ObjectStorage.Installer.dll" />
       <UmbracoInstallerFiles Include="$(InstallerProjectDir)\Configurator\**\*.*"/>
-      <UmbracoInstallerLogo Include="$(MSBuildProjectDirectory)\assets\logo\azure-logo-32.png"/>
+      <UmbracoInstallerLogo Include="$(MSBuildProjectDirectory)\assets\logo\openstack-logo-32.png"/>
       <PackageFile Include="$(MSBuildProjectDirectory)\package.xml" />
       <ImageProcessorSecurityConfigXDTInstallFile Include="$(MSBuildProjectDirectory)\transforms\security.config.install.xdt" />
       <ImageProcessorSecurityConfigDefaultFile Include="$(InstallerProjectDir)\config\imageprocessor\security.config" />
@@ -152,18 +152,18 @@
     <Copy SourceFiles="@(BinFiles)" DestinationFolder="$(BuildUmbDir)\bin" />
     <Copy SourceFiles="@(InstallerBinFiles)" DestinationFolder="$(BuildUmbDir)\bin" />
     <Copy SourceFiles="@(UmbracoOtherBinFiles)" DestinationFolder="$(BuildUmbDir)\bin" />
-    <Copy SourceFiles="@(WebConfigXDTFiles)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(MediaWebConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(MediaWebConfigXDTUninstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
+    <Copy SourceFiles="@(WebConfigXDTFiles)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(MediaWebConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(MediaWebConfigXDTUninstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
 
-    <Copy SourceFiles="@(FileSystemProvidersConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(FileSystemProvidersConfigXDTUninstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(ImageProcessorSecurityConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(ImageProcessorSecurityConfigDefaultFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
-    <Copy SourceFiles="@(ImageProcessorWebConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
+    <Copy SourceFiles="@(FileSystemProvidersConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(FileSystemProvidersConfigXDTUninstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(ImageProcessorSecurityConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(ImageProcessorSecurityConfigDefaultFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
+    <Copy SourceFiles="@(ImageProcessorWebConfigXDTInstallFile)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
 
-    <Copy SourceFiles="@(UmbracoInstallerFiles)" DestinationFiles="@(UmbracoInstallerFiles->'$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install\Configurator\%(RecursiveDir)%(Filename)%(Extension)')" />
-    <Copy SourceFiles="@(UmbracoInstallerLogo)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\Azure\Install" />
+    <Copy SourceFiles="@(UmbracoInstallerFiles)" DestinationFiles="@(UmbracoInstallerFiles->'$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install\Configurator\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(UmbracoInstallerLogo)" DestinationFolder="$(BuildUmbDir)\App_Plugins\UmbracoFileSystemProviders\ObjectStorage\Install" />
     <Copy SourceFiles="@(PackageFile)" DestinationFolder="$(BuildUmbDir)" />
 
     <!--NuGet -->

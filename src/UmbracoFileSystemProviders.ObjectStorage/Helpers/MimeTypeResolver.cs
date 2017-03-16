@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
     using System.Web;
 

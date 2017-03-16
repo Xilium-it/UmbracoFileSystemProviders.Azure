@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
-namespace Our.Umbraco.FileSystemProviders.Azure.Installer
+namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
 {
     /// <summary>
     /// Contains constants related to the installer.
@@ -13,7 +13,7 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
         /// <summary>
         /// The installer path for the plugin.
         /// </summary>
-        public const string InstallerPath = "~/App_Plugins/UmbracoFileSystemProviders/Azure/Install/";
+        public const string InstallerPath = "~/App_Plugins/UmbracoFileSystemProviders/ObjectStorage/Install/";
 
         /// <summary>
         /// The filesystem provider configuration file name.
@@ -38,7 +38,7 @@ namespace Our.Umbraco.FileSystemProviders.Azure.Installer
         /// <summary>
         /// The full qualified type name for the provider.
         /// </summary>
-        public const string ProviderType = "Our.Umbraco.FileSystemProviders.Azure.AzureBlobFileSystem, Our.Umbraco.FileSystemProviders.Azure";
+        public const string ProviderType = "Our.Umbraco.FileSystemProviders.ObjectStorage.ObjectStorageFileSystem, Our.Umbraco.FileSystemProviders.ObjectStorage";
 
         /// <summary>
         /// Contains constant values related to the ImageProcessor library.
