@@ -252,6 +252,7 @@
     <Compile Include="ObjectStorageFileSystem.cs" />
     <Compile Include="ObjectStorageServiceDriver.cs" />
     <Compile Include="Properties\VersionInfo.cs" />
+    <Compile Include="ReadSeekableStream.cs" />
     <Compile Include="VirtualPathProviderController.cs" />
     <Compile Include="FileSystemVirtualPathProvider.cs" />
     <Compile Include="FileSystemVirtualFile.cs" />

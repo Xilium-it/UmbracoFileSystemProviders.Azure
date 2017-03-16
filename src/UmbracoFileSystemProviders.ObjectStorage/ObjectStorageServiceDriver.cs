@@ -360,11 +360,15 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
             string containerName;
             var fixedPath = this.ParsePath(path, out containerName);
 
-            var responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(containerName, fixedPath, stream));
-            if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
-            {
-                throw new TimeoutException("Unable to send command to server.");
-            }
+	        stream.Position = 0;
+	        using (var streamWrapper = new ReadSeekableStream(stream, 0))
+	        {
+				var responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(containerName, fixedPath, streamWrapper));
+				if (responseTask.Wait(Constants.WaitStreamTaskTimeout) == false)
+				{
+					throw new TimeoutException("Unable to send command to server.");
+				}
+	        }
         }
 
         /// <summary>
@@ -444,7 +448,10 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 
                     return true;
                 })
-                .Select(item => item.FullName);
+                .Select(item =>
+	            {
+		            return this.GetRelativePath(item.FullName);
+	            });
 
             return files;
         }
@@ -670,14 +677,14 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
             {
                 // Relative path
 
-                var containerPathName = this.UseDefaultRoute ? Constants.DefaultMediaRoute : this.ContainerName;
+                var containerName = this.UseDefaultRoute ? Constants.DefaultMediaRoute : this.ContainerName;
 
                 if (System.Uri.IsWellFormedUriString(fixedPath, UriKind.Absolute))
                 {
                     // Path is absolute
                     if (this.rootHostUrl != null && fixedPath.StartsWith(this.rootHostUrl))
                     {
-                        return "/" + containerPathName + fixedPath.Substring(this.rootHostUrl.Length - 1);	// Why "- 1"? Because I need to select "/"
+                        return "/" + containerName + fixedPath.Substring(this.rootHostUrl.Length - 1);	// Why "- 1"? Because I need to select "/"
                     }
                     else if (fixedPath.StartsWith(this.rootProjectUrl))
                     {
@@ -691,7 +698,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                 }
                 else if (fixedPath == string.Empty || fixedPath == "/")
                 {
-                    return $"/{containerPathName}";
+                    return $"/{containerName}";
                 }
                 else if (fixedPath.StartsWith("/"))
                 {
@@ -699,7 +706,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                 }
                 else
                 {
-                    return $"/{containerPathName}/{fixedPath}";
+                    return $"/{containerName}/{fixedPath}";
                 }
             }
         }
@@ -712,9 +719,18 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <returns>Returns the path without container component.</returns>
         protected string ParsePath(string path, out string containerName)
         {
-            path = path.Replace(@"\", "/");
+            var fixedPath = path.Replace(@"\", "/");
 
-            var reMatch = Regex.Match(path, @"^/(?<container>[a-zA-Z\-_0-9\.]+)/(?<path>.+)$");
+	        if (this.rootHostUrl != null && fixedPath.StartsWith(this.rootHostUrl))
+	        {
+		        fixedPath = fixedPath.Substring(this.rootHostUrl.Length - 1);	// Why "- 1"? Because I need to select "/"
+	        }
+			else if (fixedPath.StartsWith(this.rootProjectUrl))
+            {
+                fixedPath = fixedPath.Substring(this.rootProjectUrl.Length - 1); // Why "- 1"? Because I need to select "/"
+            }
+
+            var reMatch = Regex.Match(fixedPath, @"^/(?<container>[a-zA-Z\-_0-9\.]+)/(?<path>[0-9]{4,}(/.*)?)$");
             if (reMatch.Success)
             {
                 containerName = reMatch.Groups["container"].Value;
@@ -722,7 +738,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
             }
 
             containerName = this.ContainerName;
-            return path;
+            return fixedPath;
         }
 
         /// <summary>
