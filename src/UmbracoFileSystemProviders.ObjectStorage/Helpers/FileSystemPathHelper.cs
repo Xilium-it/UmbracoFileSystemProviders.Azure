@@ -1,10 +1,6 @@
 ﻿namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 	/// <summary>
 	/// Helper for FileSystem Path

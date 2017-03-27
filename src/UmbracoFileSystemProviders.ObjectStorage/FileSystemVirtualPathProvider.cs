@@ -3,12 +3,11 @@
 // Licensed under the Apache License, Version 2.0.
 // </copyright>
 
+
 namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Web.Hosting;
-
+	using System.Web.Hosting;
     using global::Umbraco.Core.IO;
 
     /// <summary>
@@ -25,7 +24,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <summary>
         /// The file system.
         /// </summary>
-        private readonly Lazy<IFileSystem> fileSystem;
+        private readonly Lazy<ObjectStorageFileSystem> fileSystem;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileSystemVirtualPathProvider"/> class.
@@ -39,7 +38,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <exception cref="ArgumentNullException">
         /// Thrown if either argument is null.
         /// </exception>
-        public FileSystemVirtualPathProvider(string pathPrefix, Lazy<IFileSystem> fileSystem)
+        public FileSystemVirtualPathProvider(string pathPrefix, Lazy<ObjectStorageFileSystem> fileSystem)
         {
             if (string.IsNullOrEmpty(pathPrefix))
             {
@@ -63,8 +62,11 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <summary>
         /// Configures the virtual path provider.
         /// </summary>
+        /// <param name="fileSystemAlias">
+        ///     The FileSystem alias
+        /// </param>
         /// <param name="pathPrefix">
-        /// The path prefix.
+        ///     The path prefix.
         /// </param>
         /// <typeparam name="TProviderTypeFilter">
         /// The provider type filter.
@@ -72,29 +74,20 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <exception cref="ArgumentNullException">
         /// Thrown if <paramref name="pathPrefix"/> is null.
         /// </exception>
-        public static void Configure<TProviderTypeFilter>(string pathPrefix = Constants.DefaultMediaRoute)
-            where TProviderTypeFilter : FileSystemWrapper
+        public static void Configure<TProviderTypeFilter>(string fileSystemAlias, string pathPrefix = Constants.DefaultMediaRoute)
+            where TProviderTypeFilter : ObjectStorageFileSystem
         {
             if (string.IsNullOrEmpty(pathPrefix))
             {
                 throw new ArgumentNullException(nameof(pathPrefix));
             }
 
-            Lazy<IFileSystem> fileSystem = new Lazy<IFileSystem>(() => FileSystemProviderManager.Current.GetFileSystemProvider<TProviderTypeFilter>());
+            var fileSystem = new Lazy<ObjectStorageFileSystem>(() =>
+            {
+                return (ObjectStorageFileSystem)FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider(fileSystemAlias);
+            });
             FileSystemVirtualPathProvider provider = new FileSystemVirtualPathProvider(pathPrefix, fileSystem);
             HostingEnvironment.RegisterVirtualPathProvider(provider);
-        }
-
-        /// <summary>
-        /// Configures the virtual path provider for media.
-        /// </summary>
-        /// <param name="pathPrefix">
-        /// The path prefix.
-        /// </param>
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "Resharper seems drunk.")]
-        public static void ConfigureMedia(string pathPrefix = Constants.DefaultMediaRoute)
-        {
-            Configure<MediaFileSystem>(pathPrefix);
         }
 
         /// <summary>

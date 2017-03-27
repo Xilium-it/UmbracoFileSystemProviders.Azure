@@ -6,21 +6,15 @@
 namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
     using System;
-    using System.Configuration;
-
+	using System.Configuration;
     using global::Umbraco.Core;
-    using global::Umbraco.Core.IO;
+    using global::Umbraco.Core.Configuration;
 
     /// <summary>
     /// Configures the virtual path provider to correctly retrieve and serve resources from the media section.
     /// </summary>
     public class VirtualPathProviderController : ApplicationEventHandler
     {
-        /// <summary>
-        /// The configuration key for disabling the virtual path provider.
-        /// </summary>
-        private const string DisableVirtualPathProviderKey = Constants.Configuration.DisableVirtualPathProviderKey;
-
         /// <summary>
         /// Overridable method to execute when All resolvers have been initialized but resolution is not
         /// frozen so they can be modified in this method
@@ -29,29 +23,30 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <param name="applicationContext">The Umbraco <see cref="ApplicationContext"/> for the current application.</param>
         protected override void ApplicationStarting(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
         {
-            bool disable = ConfigurationManager.AppSettings[DisableVirtualPathProviderKey] != null
-                           && ConfigurationManager.AppSettings[DisableVirtualPathProviderKey]
-                                                  .Equals("true", StringComparison.InvariantCultureIgnoreCase);
-
-            IFileSystem fileSystem = FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider(Constants.DefaultMediaRoute);
-            bool isObjectStorageFileSystem = fileSystem is ObjectStorageFileSystem;
-
-            if (!disable && isObjectStorageFileSystem)
+            var configSection = this.GetFileSystemProvidersConfigSection();
+            foreach (FileSystemProviderElement providerConfig in configSection.Providers)
             {
-                var objectStorageFileSystem = ((ObjectStorageFileSystem)fileSystem).FileSystem;
+                var providerType = Type.GetType(providerConfig.Type);
+                if (providerType == null || providerType.IsAssignableFrom(typeof(ObjectStorageFileSystem)) == false)
+				{
+                    continue;
+                }
 
-                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if (objectStorageFileSystem.UseDefaultRoute)
+                var virtualPathProperty = providerConfig.Parameters[Constants.FileSystemConfiguration.VirtualPathRouteKey];
+                if (virtualPathProperty == null || string.IsNullOrEmpty(virtualPathProperty.Value))
                 {
-                    FileSystemVirtualPathProvider.ConfigureMedia(Constants.DefaultMediaRoute);
+                    continue;
                 }
-                else
-                {
-                    FileSystemVirtualPathProvider.ConfigureMedia(objectStorageFileSystem.ContainerName);
-                }
+
+                FileSystemVirtualPathProvider.Configure<ObjectStorageFileSystem>(providerConfig.Alias, virtualPathProperty.Value);
             }
 
             base.ApplicationStarting(umbracoApplication, applicationContext);
+        }
+
+        private FileSystemProvidersSection GetFileSystemProvidersConfigSection()
+        {
+            return (FileSystemProvidersSection) ConfigurationManager.GetSection("umbracoConfiguration/FileSystemProviders");
         }
     }
 }

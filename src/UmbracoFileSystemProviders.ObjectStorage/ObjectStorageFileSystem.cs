@@ -6,9 +6,6 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 	using System.Configuration;
 	using System.Globalization;
 	using System.IO;
-	using System.Linq;
-	using System.Text;
-	using System.Threading.Tasks;
 	using global::Umbraco.Core.IO;
 
 	/// <summary>
@@ -23,7 +20,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
 		public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString)
-			: this(containerName, rootUrl, connectionString, Constants.DefaultMaxDays.ToString(CultureInfo.InvariantCulture), Constants.DefaultUseDefRoute.ToString(), Constants.DefaultUsePrivateContainer.ToString())
+			: this(containerName, rootUrl, connectionString, Constants.DefaultMaxDays.ToString(CultureInfo.InvariantCulture), Constants.DefaultVirtualPathRoute, Constants.DefaultUsePrivateContainer.ToString())
 		{
 		}
 
@@ -35,7 +32,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="connectionString">The connection string.</param>
 		/// <param name="maxDays">The maximum number of days to cache blob items for in the browser.</param>
 		public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString, string maxDays)
-			: this(containerName, rootUrl, connectionString, maxDays, Constants.DefaultUseDefRoute.ToString(), Constants.DefaultUsePrivateContainer.ToString())
+			: this(containerName, rootUrl, connectionString, maxDays, Constants.DefaultVirtualPathRoute, Constants.DefaultUsePrivateContainer.ToString())
 		{
 		}
 
@@ -46,9 +43,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
 		/// <param name="maxDays">The maximum number of days to cache blob items for in the browser.</param>
-		/// <param name="useDefaultRoute">Whether to use the default "media" route in the url independent of the blob container.</param>
-		public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString, string maxDays, string useDefaultRoute)
-			: this(containerName, rootUrl, connectionString, maxDays, useDefaultRoute, Constants.DefaultUsePrivateContainer.ToString())
+        /// <param name="virtualPathRoute">When defined, Whether to use the default "media" route in the url independent of the blob container.</param>
+		public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString, string maxDays, string virtualPathRoute)
+			: this(containerName, rootUrl, connectionString, maxDays, virtualPathRoute, Constants.DefaultUsePrivateContainer.ToString())
 		{
 		}
 
@@ -59,11 +56,11 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
 		/// <param name="maxDays">The maximum number of days to cache blob items for in the browser.</param>
-		/// <param name="useDefaultRoute">Whether to use the default "media" route in the url independent of the blob container.</param>
+        /// <param name="virtualPathRoute">When defined, Whether to use the default "media" route in the url independent of the blob container.</param>
 		/// <param name="usePrivateContainer">blob container can be private (no direct access) or public (direct access possible, default)</param>
-        public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString, string maxDays, string useDefaultRoute, string usePrivateContainer)
+        public ObjectStorageFileSystem(string containerName, string rootUrl, string connectionString, string maxDays, string virtualPathRoute, string usePrivateContainer)
 		{
-			this.FileSystem = ObjectStorageServiceDriver.GetInstance(containerName, rootUrl, connectionString, int.Parse(maxDays, CultureInfo.InvariantCulture), useDefaultRoute.ToLowerInvariant() == "true", usePrivateContainer.ToLowerInvariant() == "true");
+			this.FileSystem = ObjectStorageServiceDriver.GetInstance(containerName, rootUrl, connectionString, int.Parse(maxDays, CultureInfo.InvariantCulture), virtualPathRoute, usePrivateContainer.ToLowerInvariant() == "true");
 		}
 
 		/// <summary>
@@ -73,30 +70,29 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 		/// <param name="alias">The alias of the provider</param>
 		public ObjectStorageFileSystem(string alias)
 		{
-			var containerName = ConfigurationManager.AppSettings[$"{Constants.Configuration.ContainerNameKey}:{alias}"];
+			var containerName = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.ContainerNameKey}:{alias}"];
 			if (string.IsNullOrWhiteSpace(containerName))
 			{
-				throw new InvalidOperationException($"ObjectStorage Container name is not defined in application settings. The {Constants.Configuration.ContainerNameKey} property was not defined or is empty.");
+				throw new InvalidOperationException($"ObjectStorage Container name is not defined in application settings. The {Constants.WebConfiguration.ContainerNameKey} property was not defined or is empty.");
 			}
 
-			var rootUrl = ConfigurationManager.AppSettings[$"{Constants.Configuration.RootUrlKey}:{alias}"];
+			var rootUrl = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.RootUrlKey}:{alias}"];
 
-			var connectionString = ConfigurationManager.AppSettings[$"{Constants.Configuration.ConnectionStringKey}:{alias}"];
+			var connectionString = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.ConnectionStringKey}:{alias}"];
 			if (string.IsNullOrWhiteSpace(connectionString))
 			{
-				throw new InvalidOperationException($"ObjectStorage Project Identifier is not defined in application settings. The {Constants.Configuration.ConnectionStringKey} property was not defined or is empty.");
+				throw new InvalidOperationException($"ObjectStorage Project Identifier is not defined in application settings. The {Constants.WebConfiguration.ConnectionStringKey} property was not defined or is empty.");
 			}
 
-			var maxDaysStr = ConfigurationManager.AppSettings[$"{Constants.Configuration.MaxDaysKey}:{alias}"];
+			var maxDaysStr = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.MaxDaysKey}:{alias}"];
 			var maxDays = string.IsNullOrEmpty(maxDaysStr) ? Constants.DefaultMaxDays : int.Parse(maxDaysStr);
 
-			var useDefRouteStr = ConfigurationManager.AppSettings[$"{Constants.Configuration.UseDefaultRouteKey}:{alias}"];
-			var useDefRoute = string.IsNullOrEmpty(useDefRouteStr) ? Constants.DefaultUseDefRoute : useDefRouteStr.ToLowerInvariant() == "true";
+			var virtualPathRoute = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.VirtualPathRouteKey}:{alias}"];
 
-			var usePrvContainerStr = ConfigurationManager.AppSettings[$"{Constants.Configuration.UsePrivateContainer}:{alias}"];
-			var usePrvContainer = string.IsNullOrEmpty(useDefRouteStr) ? Constants.DefaultUsePrivateContainer : usePrvContainerStr.ToLowerInvariant() == "true";
+			var usePrvContainerStr = ConfigurationManager.AppSettings[$"{Constants.WebConfiguration.UsePrivateContainer}:{alias}"];
+			var usePrvContainer = string.IsNullOrEmpty(usePrvContainerStr) ? Constants.DefaultUsePrivateContainer : usePrvContainerStr.ToLowerInvariant() == "true";
 
-			this.FileSystem = ObjectStorageServiceDriver.GetInstance(containerName, rootUrl, connectionString, maxDays, useDefRoute, usePrvContainer);
+			this.FileSystem = ObjectStorageServiceDriver.GetInstance(containerName, rootUrl, connectionString, maxDays, virtualPathRoute, usePrvContainer);
 		}
 
 		/// <summary>

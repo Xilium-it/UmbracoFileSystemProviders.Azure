@@ -5,22 +5,25 @@
 
 namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
-    using System;
-    using System.IO;
-    using System.Web;
-    using System.Web.Hosting;
+	using System;
+	using System.IO;
+	using System.Web;
+	using System.Web.Hosting;
 
-    using global::Umbraco.Core.IO;
-
-    /// <summary>
-    /// Represents a file object in a virtual file.
-    /// </summary>
-    internal class FileSystemVirtualFile : VirtualFile
+	/// <summary>
+	/// Represents a file object in a virtual file.
+	/// </summary>
+	internal class FileSystemVirtualFile : VirtualFile
     {
         /// <summary>
         /// The stream function delegate.
         /// </summary>
         private readonly Func<Stream> stream;
+
+		/// <summary>
+		/// The FileSystem where file is stored.
+		/// </summary>
+	    private readonly Func<ObjectStorageFileSystem> fileSystem;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileSystemVirtualFile"/> class.
@@ -31,7 +34,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         /// <exception cref="ArgumentNullException">
         /// Thrown if <paramref name="fileSystem"/> is null.
         /// </exception>
-        public FileSystemVirtualFile(string virtualPath, Lazy<IFileSystem> fileSystem, string fileSystemPath)
+        public FileSystemVirtualFile(string virtualPath, Lazy<ObjectStorageFileSystem> fileSystem, string fileSystemPath)
             : base(virtualPath)
         {
             if (fileSystem == null)
@@ -39,6 +42,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
                 throw new ArgumentNullException(nameof(fileSystem));
             }
 
+	        this.fileSystem = () => fileSystem.Value;
             this.stream = () => fileSystem.Value.OpenFile(fileSystemPath);
         }
 
@@ -65,8 +69,8 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
                 cache.SetCacheability(HttpCacheability.Public);
                 cache.VaryByHeaders["Accept-Encoding"] = true;
 
-                IFileSystem objectStorageFileSystem = FileSystemProviderManager.Current.GetUnderlyingFileSystemProvider("media");
-                int maxDays = ((ObjectStorageFileSystem)objectStorageFileSystem).FileSystem.MaxDays;
+                var objectStorageFileSystem = fileSystem();
+                int maxDays = objectStorageFileSystem.FileSystem.MaxDays;
 
                 cache.SetExpires(DateTime.Now.ToUniversalTime().AddDays(maxDays));
                 cache.SetMaxAge(new TimeSpan(maxDays, 0, 0, 0));

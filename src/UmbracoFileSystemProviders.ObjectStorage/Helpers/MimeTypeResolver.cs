@@ -5,9 +5,9 @@
 
 namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
-    using System.Web;
+	using System.Web;
 
-    /// <summary>
+	/// <summary>
     /// The default MIME type resolver.
     /// </summary>
     public class MimeTypeResolver : IMimeTypeResolver

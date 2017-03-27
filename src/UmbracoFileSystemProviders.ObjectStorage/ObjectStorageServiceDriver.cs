@@ -3,11 +3,9 @@
 namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
     using System;
     using System.Collections.Generic;
-    using System.Configuration;
+	using System.Configuration;
     using System.IO;
     using System.Linq;
-    using System.Text;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using global::Umbraco.Core.IO;
     using OpenStack.ObjectStorage.v1;
@@ -65,9 +63,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="maxDays">The maximum number of days to cache blob items for in the browser.</param>
-        /// <param name="useDefaultRoute">Whether to use the default "media" route in the url independent of the blob container.</param>
+        /// <param name="virtualPathRoute">When defined, Whether to use the default "media" route in the url independent of the blob container.</param>
         /// <param name="usePrivateContainer">blob container can be private (no direct access) or public (direct access possible, default)</param>
-        protected ObjectStorageServiceDriver(string containerName, string rootUrl, string connectionString, int maxDays, bool useDefaultRoute, bool usePrivateContainer)
+        protected ObjectStorageServiceDriver(string containerName, string rootUrl, string connectionString, int maxDays, string virtualPathRoute, bool usePrivateContainer)
         {
             if (string.IsNullOrWhiteSpace(containerName))
             {
@@ -78,9 +76,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                 throw new ArgumentNullException(nameof(connectionString));
             }
 
-            this.DisableVirtualPathProvider = this.GetConfigValueBool(Constants.Configuration.DisableVirtualPathProviderKey, false);
+            this.VirtualPathRouteDisabled = string.IsNullOrEmpty(virtualPathRoute);
 
-            var useEmulator = this.GetConfigValueBool(Constants.Configuration.UseStorageEmulatorKey, false);
+            var useEmulator = this.GetConfigValueBool(Constants.WebConfiguration.UseStorageEmulatorKey, false);
 
             var connectionStringParser = new ConnectionStringParser();
             var connectionStringData = connectionStringParser.Decode(connectionString);
@@ -97,12 +95,12 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 
             this.objectStorageService = new ObjectStorageService(authentication, connectionStringData.Region, false);
 
-            this.instanceKey = CreateInstanceKey(containerName, rootUrl, connectionString, useDefaultRoute);
+            this.instanceKey = CreateInstanceKey(containerName, rootUrl, connectionString, virtualPathRoute, usePrivateContainer);
             this.ProjectId = connectionStringData.ProjectId;
             this.ContainerName = containerName;
             this.Region = connectionStringData.Region;
             this.MaxDays = maxDays;
-            this.UseDefaultRoute = useDefaultRoute;
+            this.VirtualPathRoute = this.VirtualPathRouteDisabled ? null : virtualPathRoute;
             this.UsePrivateContainer = usePrivateContainer;
 
             var rootContainerUrlTask = Task.Run(() => this.objectStorageService.GetContainerUrlAsync(this.ContainerName));
@@ -146,11 +144,6 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         public IMimeTypeResolver MimeTypeResolver { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to disable the virtual path provider.
-        /// </summary>
-        public bool DisableVirtualPathProvider { get; set; }
-
-        /// <summary>
         /// Blob container can be private (no direct access) or public (direct access possible, default)
         /// </summary>
         public bool UsePrivateContainer { get; }
@@ -176,10 +169,14 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         public int MaxDays { get; }
 
         /// <summary>
-        /// Gets a value indicating whether to use the default "media" route in the url
-        /// independent of the blob container.
+        /// Gets or sets a value indicating the VirtualPath route. When not defined the route is disabled.
         /// </summary>
-        public bool UseDefaultRoute { get; }
+        public string VirtualPathRoute { get; }
+
+        /// <summary>
+        /// Gets or sets a value indicating if VirtualPath is disabled.
+        /// </summary>
+        public bool VirtualPathRouteDisabled { get; }
 
         /// <summary>
         /// Returns a singleton instance of the <see cref="ObjectStorageServiceDriver"/> class.
@@ -188,12 +185,12 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="maxDays">The maximum number of days to cache blob items for in the browser.</param>
-        /// <param name="useDefaultRoute">Whether to use the default "media" route in the url independent of the blob container.</param>
+        /// <param name="virtualPathRoute">When defined, Whether to use the default "media" route in the url independent of the blob container.</param>
         /// <param name="usePrivateContainer">blob container can be private (no direct access) or public (direct access possible, default)</param>
         /// <returns>The <see cref="ObjectStorageServiceDriver"/></returns>
-        public static ObjectStorageServiceDriver GetInstance(string containerName, string rootUrl, string connectionString, int maxDays, bool useDefaultRoute, bool usePrivateContainer)
+        public static ObjectStorageServiceDriver GetInstance(string containerName, string rootUrl, string connectionString, int maxDays, string virtualPathRoute, bool usePrivateContainer)
         {
-            var newestInstanceKey = CreateInstanceKey(containerName, rootUrl, connectionString, useDefaultRoute);
+            var newestInstanceKey = CreateInstanceKey(containerName, rootUrl, connectionString, virtualPathRoute, usePrivateContainer);
 
             lock (Locker)
             {
@@ -206,7 +203,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                         maxDays = Constants.DefaultMaxDays;
                     }
 
-                    fileSystem = new ObjectStorageServiceDriver(containerName, rootUrl, connectionString, maxDays, useDefaultRoute, usePrivateContainer);
+                    fileSystem = new ObjectStorageServiceDriver(containerName, rootUrl, connectionString, maxDays, virtualPathRoute, usePrivateContainer);
 
                     serviceDriverInstances.Add(fileSystem);
                 }
@@ -224,21 +221,20 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </returns>
         public IEnumerable<string> GetDirectories(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
             var searchPrefixFilterValue = FileSystemPathHelper.Instance.PathWithoutDelimiter(fixedPath);
             if (searchPrefixFilterValue != string.Empty)
             {
                 searchPrefixFilterValue += "/";
-			}
+            }
 
             var filterCollection = new ContentObjectFilterCollection(new IContentObjectFilter[]
             {
                 new SearchPrefixContentObjectFilter() { PathPrefix = searchPrefixFilterValue },
                 new DelimiterContentObjectFilter(),
             });
-            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(containerName, filterCollection));
+            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(this.ContainerName, filterCollection));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -276,21 +272,20 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 
             if (recursive)
             {
-                string containerName;
-                var fixedPath = this.ParsePath(path, out containerName);
+                var fixedPath = this.ParsePath(path);
 
                 var filterCollection = new ContentObjectFilterCollection(new IContentObjectFilter[]
                 {
                     new SearchPrefixContentObjectFilter() { PathPrefix = FileSystemPathHelper.Instance.PathWithDelimiter(fixedPath) },
                 });
-                var contentTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(containerName, filterCollection));
+                var contentTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(this.ContainerName, filterCollection));
                 if (contentTask.Wait(Constants.WaitTaskTimeout) == false)
                 {
                     throw new TimeoutException("Unable to send command to server.");
                 }
 
                 var files = contentTask.Result.OfType<ContainerObject>();
-                var deleteResultTask = Task.Run(() => this.objectStorageService.DeleteContainerObjectListAsync(containerName, files.Select(item => item.FullName)));
+                var deleteResultTask = Task.Run(() => this.objectStorageService.DeleteContainerObjectListAsync(this.ContainerName, files.Select(item => item.FullName)));
                 if (deleteResultTask.Wait(Constants.WaitTaskTimeout) == false)
                 {
                     throw new TimeoutException("Unable to send command to server.");
@@ -314,15 +309,14 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </returns>
         public bool DirectoryExists(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
             var filterCollection = new ContentObjectFilterCollection(new IContentObjectFilter[]
             {
                 new SearchPrefixContentObjectFilter() { PathPrefix = FileSystemPathHelper.Instance.PathWithDelimiter(fixedPath) },
                 new TakeContentObjectFilter() { TakeLimit = 1 },
             });
-            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(containerName, filterCollection));
+            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(this.ContainerName, filterCollection));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -357,18 +351,17 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                 }
             }
 
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
-	        stream.Position = 0;
-	        using (var streamWrapper = new ReadSeekableStream(stream, 0))
-	        {
-				var responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(containerName, fixedPath, streamWrapper));
-				if (responseTask.Wait(Constants.WaitStreamTaskTimeout) == false)
-				{
-					throw new TimeoutException("Unable to send command to server.");
-				}
-	        }
+            stream.Position = 0;
+            using (var streamWrapper = new ReadSeekableStream(stream, 0))
+            {
+                var responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(this.ContainerName, fixedPath, streamWrapper));
+                if (responseTask.Wait(Constants.WaitStreamTaskTimeout) == false)
+                {
+                    throw new TimeoutException("Unable to send command to server.");
+                }
+            }
         }
 
         /// <summary>
@@ -396,8 +389,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
             string startsWithFilter = string.Empty;
             string endsWithFilter = string.Empty;
 
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
             if (string.IsNullOrEmpty(filter) == false && filter != "*" && filter != "*.*")
             {
@@ -425,7 +417,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
             {
                 new PathContentObjectFilter() { Path = FileSystemPathHelper.Instance.PathWithoutDelimiter(fixedPath) },
             });
-            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(containerName, filterCollection));
+            var responseTask = Task.Run(() => this.objectStorageService.GetContainerContentAsync(this.ContainerName, filterCollection));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -449,9 +441,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                     return true;
                 })
                 .Select(item =>
-	            {
-		            return this.GetRelativePath(item.FullName);
-	            });
+                {
+                    return this.GetRelativePath(item.FullName);
+                });
 
             return files;
         }
@@ -465,10 +457,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </returns>
         public Stream OpenFile(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
-            var responseTask = Task.Run(() => this.objectStorageService.GetContainerObjectAsync(containerName, fixedPath));
+            var responseTask = Task.Run(() => this.objectStorageService.GetContainerObjectAsync(this.ContainerName, fixedPath));
             if (responseTask.Wait(Constants.WaitStreamTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -483,10 +474,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="path">The name of the file to remove.</param>
         public void DeleteFile(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
-            var responseTask = Task.Run(() => this.objectStorageService.DeleteContainerObjectAsync(containerName, fixedPath));
+            var responseTask = Task.Run(() => this.objectStorageService.DeleteContainerObjectAsync(this.ContainerName, fixedPath));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -502,10 +492,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </returns>
         public bool FileExists(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
-            var responseTask = Task.Run(() => this.objectStorageService.CheckContainerObjectExistsAsync(containerName, fixedPath));
+            var responseTask = Task.Run(() => this.objectStorageService.CheckContainerObjectExistsAsync(this.ContainerName, fixedPath));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -541,7 +530,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <see cref="string"/>.
         /// </returns>
         public string GetUrl(string path) {
-            if (this.DisableVirtualPathProvider)
+            if (this.VirtualPathRouteDisabled)
             {
                 return this.ResolveUrl(path, false);
             }
@@ -556,11 +545,11 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <returns>
         /// <see cref="DateTimeOffset"/>.
         /// </returns>
-        public DateTimeOffset GetLastModified(string path) {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+        public DateTimeOffset GetLastModified(string path)
+        {
+            var fixedPath = this.ParsePath(path);
 
-            var responseTask = Task.Run(() => this.objectStorageService.ReadContainerObjectMetadataAsync(containerName, fixedPath));
+            var responseTask = Task.Run(() => this.objectStorageService.ReadContainerObjectMetadataAsync(this.ContainerName, fixedPath));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -591,10 +580,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </returns>
         public DateTimeOffset GetCreated(string path)
         {
-            string containerName;
-            var fixedPath = this.ParsePath(path, out containerName);
+            var fixedPath = this.ParsePath(path);
 
-            var responseTask = Task.Run(() => this.objectStorageService.ReadContainerObjectMetadataAsync(containerName, fixedPath));
+            var responseTask = Task.Run(() => this.objectStorageService.ReadContainerObjectMetadataAsync(this.ContainerName, fixedPath));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");
@@ -622,11 +610,13 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// <param name="containerName">The container name.</param>
         /// <param name="rootUrl">The root url.</param>
         /// <param name="connectionString">The connection string.</param>
-        /// <param name="useDefaultRoute">Whether to use the default "media" route in the url independent of the blob container.</param>
+        /// <param name="virtualPathRoute">When defined, Whether to use the default "media" route in the url independent of the blob container.</param>
+        /// <param name="usePrivateContainer">blob container can be private (no direct access) or public (direct access possible, default)</param>
         /// <returns>The <see cref="ObjectStorageServiceDriver"/> instance key</returns>
-        protected static string CreateInstanceKey(string containerName, string rootUrl, string connectionString, bool useDefaultRoute)
+        protected static string CreateInstanceKey(string containerName, string rootUrl, string connectionString, string virtualPathRoute, bool usePrivateContainer)
         {
-            return $"{connectionString}/{rootUrl}/{containerName}";
+            var usePrvCont = usePrivateContainer ? "prv" : "pub";
+            return $"{connectionString}/{rootUrl}/{containerName}({virtualPathRoute}|{usePrvCont})";
         }
 
         /// <summary>
@@ -640,104 +630,88 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         protected string ResolveUrl(string path, bool relative)
         {
             // First create the full url
-            string fixedPath = path.Replace(@"\", "/");
+            string fixedPath = this.ParsePath(path);
 
             if (!relative)
             {
+                //
                 // Absolute path
-                if (System.Uri.IsWellFormedUriString(fixedPath, UriKind.Absolute))
-                {
-                    // Is already an absolute path
-                    return fixedPath;
-                }
-                else if (string.IsNullOrEmpty(fixedPath) || fixedPath == "/")
+                //
+
+                if (string.IsNullOrEmpty(fixedPath))
                 {
                     // Requested path is empty. Return root path
                     return this.rootHostUrl ?? this.rootContainerUrl;
                 }
+                else if (System.Uri.IsWellFormedUriString(fixedPath, UriKind.Absolute))
+                {
+                    // Is already an absolute path, but `ParsePath` remove hostname when it is known.
+                    // Then the `path` does not contains a right url path.
+                    return null;
+                }
                 else
                 {
                     // Join root path with requested path
-
-                    string containerName;
-                    fixedPath = this.ParsePath(fixedPath, out containerName);
-
-                    var isContainerPath = (containerName == this.ContainerName) || (this.UseDefaultRoute && containerName == Constants.DefaultMediaRoute);
-                    if (isContainerPath && this.rootHostUrl != null)
-                    {
-                        return $"{this.rootHostUrl}{fixedPath}";
-                    }
-                    else
-                    {
-                        return $"{this.rootProjectUrl}{containerName}/{fixedPath}";
-                    }
+                    return $"{this.rootHostUrl ?? this.rootContainerUrl}{fixedPath}";
                 }
             }
             else
             {
+                //
                 // Relative path
+                //
 
-                var containerName = this.UseDefaultRoute ? Constants.DefaultMediaRoute : this.ContainerName;
-
-                if (System.Uri.IsWellFormedUriString(fixedPath, UriKind.Absolute))
+                if (this.VirtualPathRouteDisabled)
                 {
-                    // Path is absolute
-                    if (this.rootHostUrl != null && fixedPath.StartsWith(this.rootHostUrl))
-                    {
-                        return "/" + containerName + fixedPath.Substring(this.rootHostUrl.Length - 1);	// Why "- 1"? Because I need to select "/"
-                    }
-                    else if (fixedPath.StartsWith(this.rootProjectUrl))
-                    {
-                        return fixedPath.Substring(this.rootProjectUrl.Length - 1); // Why "- 1"? Because I need to select "/"
-                    }
-                    else
-                    {
-                        // Invalid URL: it is not managed by current FileSystem.
-                        return null;
-                    }
-                }
-                else if (fixedPath == string.Empty || fixedPath == "/")
-                {
-                    return $"/{containerName}";
-                }
-                else if (fixedPath.StartsWith("/"))
-                {
+                    //
+                    // No virtual Path: I will return a clean Path
+                    //
                     return fixedPath;
                 }
                 else
                 {
-                    return $"/{containerName}/{fixedPath}";
+                    //
+                    // Virtual Path is enabled: I will return the Path with "containerName".
+                    //
+
+                    if (string.IsNullOrEmpty(fixedPath) == false)
+                    {
+                        fixedPath = "/" + fixedPath;
+                    }
+
+                    return $"/{this.VirtualPathRoute}{fixedPath}";
                 }
             }
         }
 
         /// <summary>
-        /// Parse "path" then split container's path by containerName.
+        /// Parse "path" to obtain the RelativePath.
         /// </summary>
         /// <param name="path">The path to parse</param>
-        /// <param name="containerName">ContainerName found in path, or <see cref="ObjectStorageServiceDriver.ContainerName"/> when not found.</param>
         /// <returns>Returns the path without container component.</returns>
-        protected string ParsePath(string path, out string containerName)
+        protected string ParsePath(string path)
         {
             var fixedPath = path.Replace(@"\", "/");
 
-	        if (this.rootHostUrl != null && fixedPath.StartsWith(this.rootHostUrl))
-	        {
-		        fixedPath = fixedPath.Substring(this.rootHostUrl.Length - 1);	// Why "- 1"? Because I need to select "/"
-	        }
-			else if (fixedPath.StartsWith(this.rootProjectUrl))
+            if (this.rootHostUrl != null && fixedPath.StartsWith(this.rootHostUrl))
             {
-                fixedPath = fixedPath.Substring(this.rootProjectUrl.Length - 1); // Why "- 1"? Because I need to select "/"
+                fixedPath = fixedPath.Substring(this.rootHostUrl.Length);
+            }
+            else if (fixedPath.StartsWith(this.rootContainerUrl))
+            {
+                fixedPath = fixedPath.Substring(this.rootContainerUrl.Length);
+            }
+            else if (this.VirtualPathRouteDisabled == false)
+            {
+                var rootFolder = $"/{this.VirtualPathRoute}/";
+                if (fixedPath.StartsWith(rootFolder))
+                {
+                    fixedPath = fixedPath.Substring(rootFolder.Length);
+                }
             }
 
-            var reMatch = Regex.Match(fixedPath, @"^/(?<container>[a-zA-Z\-_0-9\.]+)/(?<path>[0-9]{4,}(/.*)?)$");
-            if (reMatch.Success)
-            {
-                containerName = reMatch.Groups["container"].Value;
-                return reMatch.Groups["path"].Value;
-            }
-
-            containerName = this.ContainerName;
+            fixedPath = fixedPath.TrimStart('/');
+            
             return fixedPath;
         }
 
@@ -746,11 +720,32 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
         /// </summary>
         protected void InitializeContainer()
         {
-            var metadataCollection = new ContainerMetadataCollection(new IContainerMetadata[]
+            var originsList = new List<string>();
+
+            var currentMetadataColl = Task.Run(() => this.objectStorageService.ReadContainerMetadataAsync(this.ContainerName));
+            var currentOrigins = currentMetadataColl.Result.OfType<AccessControlAllowOriginContainerMetadata>().FirstOrDefault();
+            if (currentOrigins != null)
+            {
+                originsList.AddRange(currentOrigins.Origins);
+            }
+
+            string currentDomain = null;
+            if (System.Web.HttpContext.Current != null && System.Web.HttpContext.Current.CurrentHandler != null)
+            {
+                currentDomain = System.Web.HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+            }
+
+            if (currentDomain != null && originsList.Contains(currentDomain) == false)
+            {
+                originsList.Add(currentDomain);
+            }
+
+            var newestMetadataColl = new ContainerMetadataCollection(new IContainerMetadata[]
             {
                 new AccessControlMaxAgeContainerMetadata() { MaxAgeSeconds = (long)(this.MaxDays * 24 * 3600) },
+                new AccessControlAllowOriginContainerMetadata() { Origins = originsList.ToArray() },
             });
-            var responseTask = Task.Run(() => this.objectStorageService.SaveContainerMetadataAsync(this.ContainerName, metadataCollection));
+            var responseTask = Task.Run(() => this.objectStorageService.SaveContainerMetadataAsync(this.ContainerName, newestMetadataColl));
             if (responseTask.Wait(Constants.WaitTaskTimeout) == false)
             {
                 throw new TimeoutException("Unable to send command to server.");

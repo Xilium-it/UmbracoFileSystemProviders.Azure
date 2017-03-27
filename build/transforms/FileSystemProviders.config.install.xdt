@@ -18,10 +18,9 @@
       -->
       <add key="maxDays" value="365" xdt:Locator="Match(key)" xdt:Transform="InsertIfMissing" />
       <!--
-        When true this allows the VirtualPathProvider to use the deafult "media" route prefix regardless 
-        of the container name.
+        The root of VirtualPath route. When is defined, allow the FileSystem to route requests in "virtualPathRoute" to resource URL.
       -->
-      <add key="useDefaultRoute" value="true" xdt:Locator="Match(key)" xdt:Transform="InsertIfMissing" />
+      <add key="virtualPathRoute" value="media" xdt:Locator="Match(key)" xdt:Transform="InsertIfMissing" />
       <!--
         When true blob containers will be private instead of public what means that you can't access the original blob file directly from its blob url.
       -->

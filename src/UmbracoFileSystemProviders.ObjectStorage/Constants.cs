@@ -21,9 +21,9 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         public const int DefaultMaxDays = 365;
 
         /// <summary>
-        /// The default UseDefaultRoute value.
+        /// The default VirtualPathRoute value.
         /// </summary>
-        public const bool DefaultUseDefRoute = true;
+        public const string DefaultVirtualPathRoute = null;
 
         /// <summary>
         /// The default UsePrivateContainer value.
@@ -41,50 +41,81 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage
         internal const int WaitStreamTaskTimeout = 24 * 3600 * 1000;
 
         /// <summary>
-        /// The configuration setting constants.
+        /// The web.config configuration setting constants.
         /// </summary>
-        public static class Configuration
+        public static class WebConfiguration
         {
             /// <summary>
             /// The configuration key for providing the ObjectStorage Blob Container Name via the web.config
             /// </summary>
-            public const string ContainerNameKey = "ObjectStorageBlobFileSystem.ContainerName";
+            public const string ContainerNameKey = "ObjectStorageFileSystem.ContainerName";
 
             /// <summary>
             /// The configuration key for providing the Root URL via the web.config
             /// </summary>
-            public const string RootUrlKey = "ObjectStorageBlobFileSystem.RootUrl";
+            public const string RootUrlKey = "ObjectStorageFileSystem.RootUrl";
 
             /// <summary>
             /// The configuration key for providing the ConnectionString via the web.config
             /// </summary>
-            public const string ConnectionStringKey = "ObjectStorageBlobFileSystem.ConnectionString";
+            public const string ConnectionStringKey = "ObjectStorageFileSystem.ConnectionString";
 
             /// <summary>
             /// The configuration key for providing the Maximum Days Cache value via the web.config
             /// </summary>
-            public const string MaxDaysKey = "ObjectStorageBlobFileSystem.MaxDays";
+            public const string MaxDaysKey = "ObjectStorageFileSystem.MaxDays";
 
             /// <summary>
-            /// The configuration key for providing the Use Default Root value via the web.config
+            /// The configuration key for providing the Use VirtualPath Root value via the web.config
             /// </summary>
-            public const string UseDefaultRouteKey = "ObjectStorageBlobFileSystem.UseDefaultRoute";
-
-            /// <summary>
-            /// The configuration key for disabling the virtual path provider.
-            /// </summary>
-            public const string DisableVirtualPathProviderKey = "ObjectStorageBlobFileSystem.DisableVirtualPathProvider";
-
-            /// <summary>
-            /// The configuration key for enabling the storage emulator.
-            /// </summary>
-            public const string UseStorageEmulatorKey = "ObjectStorageBlobFileSystem.UseStorageEmulator";
+            public const string VirtualPathRouteKey = "ObjectStorageFileSystem.VirtualPathRoute";
 
             /// <summary>
             /// The configuration key for providing the Use Private Container value via the web.config
             /// </summary>
-            public const string UsePrivateContainer = "ObjectStorageBlobFileSystem.UsePrivateContainer";
+            public const string UsePrivateContainer = "ObjectStorageFileSystem.UsePrivateContainer";
+
+            /// <summary>
+            /// The configuration key for enabling the storage emulator.
+            /// </summary>
+            public const string UseStorageEmulatorKey = "ObjectStorageFileSystem.UseStorageEmulator";
         }
+
+		/// <summary>
+		/// The config/FileSystemProviders.config configuration setting constants
+		/// </summary>
+	    public static class FileSystemConfiguration
+	    {
+		    /// <summary>
+            /// The configuration key for providing the ObjectStorage Blob Container Name
+            /// </summary>
+            public const string ContainerNameKey = "containerName";
+
+            /// <summary>
+            /// The configuration key for providing the Root URL
+            /// </summary>
+            public const string RootUrlKey = "rootUrl";
+
+            /// <summary>
+            /// The configuration key for providing the ConnectionString
+            /// </summary>
+            public const string ConnectionStringKey = "connectionString";
+
+            /// <summary>
+            /// The configuration key for providing the Maximum Days Cache value
+            /// </summary>
+            public const string MaxDaysKey = "maxDays";
+
+            /// <summary>
+            /// The configuration key for providing the Use VirtualPath Root value
+            /// </summary>
+            public const string VirtualPathRouteKey = "virtualPathRoute";
+
+            /// <summary>
+            /// The configuration key for providing the Use Private Container value
+            /// </summary>
+            public const string UsePrivateContainer = "usePrivateContainer";
+	    }
 
         /// <summary>
         /// The connection string arguments.

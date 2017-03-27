@@ -79,7 +79,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
             var username = newParameters.SingleOrDefault(k => k.Key == "username").Value;
             var password = newParameters.SingleOrDefault(k => k.Key == "password").Value;
 
-            bool useDefaultRoute = bool.Parse(newParameters.SingleOrDefault(k => k.Key == "useDefaultRoute").Value);
+            var virtualPathRoute = newParameters.SingleOrDefault(k => k.Key == "virtualPathRoute").Value;
             bool usePrivateContainer = bool.Parse(newParameters.SingleOrDefault(k => k.Key == "usePrivateContainer").Value);
 
             if (!TestObjectStorageCredentials(urlBase, projectId, containerName, region, username, password))
@@ -87,7 +87,7 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
                 return InstallerStatus.ConnectionError;
             }
 
-            string routePrefix = useDefaultRoute ? ObjectStorage.Constants.DefaultMediaRoute : containerName;
+            string routePrefix = virtualPathRoute;
 
             if (SaveParametersToFileSystemProvidersXdt(this.fileSystemProvidersConfigInstallXdtPath, newParameters) && SaveContainerNameToWebConfigXdt(this.webConfigXdtPath, routePrefix))
             {
@@ -451,8 +451,8 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage.Installer
 
         private static bool TestObjectStorageCredentials(string urlBase, string projectId, string containerName, string region, string username, string password)
         {
-            bool useEmulator = ConfigurationManager.AppSettings[ObjectStorage.Constants.Configuration.UseStorageEmulatorKey] != null
-                               && ConfigurationManager.AppSettings[ObjectStorage.Constants.Configuration.UseStorageEmulatorKey]
+            bool useEmulator = ConfigurationManager.AppSettings[ObjectStorage.Constants.WebConfiguration.UseStorageEmulatorKey] != null
+                               && ConfigurationManager.AppSettings[ObjectStorage.Constants.WebConfiguration.UseStorageEmulatorKey]
                                                       .Equals("true", StringComparison.InvariantCultureIgnoreCase);
             try
             {

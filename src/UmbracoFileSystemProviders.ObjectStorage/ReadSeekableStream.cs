@@ -1,13 +1,9 @@
 ﻿namespace Our.Umbraco.FileSystemProviders.ObjectStorage
 {
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-    /// <summary>
+	/// <summary>
     /// Creates a Stream wrapper.
     /// It is useful when it is important that the stream will not disposed after using.
     /// <para>
