@@ -1,13 +1,17 @@
-# UmbracoFileSystemProviders.Azure
+# UmbracoFileSystemProviders.ObjectStorage
 
-![Image Alt](build/assets/logo/azure-logo-256.png)
+![Image Alt](build/assets/logo/openstack-logo-256.png)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/mn5hxj5ijurwih7q?svg=true)](https://ci.appveyor.com/project/JamesSouth/umbracofilesystemproviders-azure)
-
-An [Azure Blob Storage](http://azure.microsoft.com/en-gb/develop/net/) IFileSystem provider for [Umbraco](https://umbraco.com) 7.1.9+. 
+An [OpenStack ObjectStorage](https://developer.openstack.org/api-ref/object-storage/) IFileSystem provider for [Umbraco](https://umbraco.com) 7.1.9+. 
 Used to offload static files in the media section to the cloud.
 
-Designed to supersede [UmbracoAzureBlobStorage](https://github.com/idseefeld/UmbracoAzureBlobStorage) by [Dirk Seefeld](https://twitter.com/dseefeld65) (With his blessing) this package allows the storage and retrieval of media items using Azure Blob Storage while retaining the relative paths to the files expected in the back office.
+This project is a fork of [UmbracoFileSystemProviders.Azure](https://github.com/JimBobSquarePants/UmbracoFileSystemProviders.Azure).
+
+... document to rewrite...  
+... document to rewrite...  
+... document to rewrite...  
+....
+
 
 ## Installation
 
