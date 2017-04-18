@@ -366,10 +366,12 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
 
 			// Setting metadata
 			var metadataCollection = new ContainerObjectMetadataCollection();
-			metadataCollection.Add(new CacheControlContainerObjectMetadata()
-			{
+			metadataCollection.Add(new CacheControlContainerObjectMetadata() {
 				Cacheability = this.UsePrivateContainer ? CacheControlContainerObjectMetadata.CacheabilityEnum.PrivateCache : CacheControlContainerObjectMetadata.CacheabilityEnum.PublicCache,
 				MaxAge = new TimeSpan(this.MaxDays, 0, 0, 0, 0)
+			});
+			metadataCollection.Add(new ExpiresContainerObjectMetadata() {
+				ExpireDate = System.DateTimeOffset.UtcNow.AddDays(this.MaxDays)
 			});
 			responseTask = Task.Run(() => this.objectStorageService.SaveContainerObjectMetadataAsync(this.ContainerName, fixedPath, metadataCollection));
 			if (responseTask.Wait(Constants.WaitTaskTimeout) == false) {
