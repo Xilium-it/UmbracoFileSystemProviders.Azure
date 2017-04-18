@@ -351,27 +351,40 @@ namespace Our.Umbraco.FileSystemProviders.ObjectStorage {
                 }
             }
 
-            var fixedPath = this.ParsePath(path);
+	        Task responseTask;
+			var fixedPath = this.ParsePath(path);
 
             stream.Position = 0;
             using (var streamWrapper = new ReadSeekableStream(stream, 0))
             {
-                var responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(this.ContainerName, fixedPath, streamWrapper));
+                responseTask = Task.Run(() => this.objectStorageService.UpdateContainerObjectAsync(this.ContainerName, fixedPath, streamWrapper));
                 if (responseTask.Wait(Constants.WaitStreamTaskTimeout) == false)
                 {
                     throw new TimeoutException("Unable to send command to server.");
                 }
             }
-        }
 
-        /// <summary>
-        /// Gets all files matching the given path.
-        /// </summary>
-        /// <param name="path">The path to the files.</param>
-        /// <returns>
-        /// The <see cref="IEnumerable{String}"/> representing the matched files.
-        /// </returns>
-        public IEnumerable<string> GetFiles(string path)
+			// Setting metadata
+			var metadataCollection = new ContainerObjectMetadataCollection();
+			metadataCollection.Add(new CacheControlContainerObjectMetadata()
+			{
+				Cacheability = this.UsePrivateContainer ? CacheControlContainerObjectMetadata.CacheabilityEnum.PrivateCache : CacheControlContainerObjectMetadata.CacheabilityEnum.PublicCache,
+				MaxAge = new TimeSpan(this.MaxDays, 0, 0, 0, 0)
+			});
+			responseTask = Task.Run(() => this.objectStorageService.SaveContainerObjectMetadataAsync(this.ContainerName, fixedPath, metadataCollection));
+			if (responseTask.Wait(Constants.WaitTaskTimeout) == false) {
+				throw new TimeoutException("Unable to send command to server.");
+			}
+		}
+
+		/// <summary>
+		/// Gets all files matching the given path.
+		/// </summary>
+		/// <param name="path">The path to the files.</param>
+		/// <returns>
+		/// The <see cref="IEnumerable{String}"/> representing the matched files.
+		/// </returns>
+		public IEnumerable<string> GetFiles(string path)
         {
             return this.GetFiles(path, "*.*");
         }
